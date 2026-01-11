@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>PARCE – Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,6 +16,7 @@
       height: 100vh;
       margin: 0;
     }
+
     .chat {
       width: 100%;
       max-width: 420px;
@@ -24,6 +26,7 @@
       flex-direction: column;
       overflow: hidden;
     }
+
     .header {
       background: #020617;
       padding: 12px;
@@ -31,34 +34,44 @@
       font-weight: bold;
       border-bottom: 1px solid #1e293b;
     }
+
     .messages {
       flex: 1;
       padding: 10px;
       overflow-y: auto;
       font-size: 14px;
     }
+
     .msg {
       margin-bottom: 10px;
+      white-space: pre-wrap;
     }
+
     .user {
       text-align: right;
       color: #38bdf8;
     }
+
     .bot {
       text-align: left;
       color: #a3e635;
     }
+
     .input {
       display: flex;
       border-top: 1px solid #1e293b;
     }
+
     input {
       flex: 1;
       padding: 10px;
       border: none;
       outline: none;
       font-size: 14px;
+      background: #020617;
+      color: #e5e7eb;
     }
+
     button {
       background: #38bdf8;
       border: none;
@@ -68,18 +81,20 @@
     }
   </style>
 </head>
+
 <body>
 
 <div class="chat">
   <div class="header">PARCE 🤜🤛</div>
   <div class="messages" id="messages"></div>
   <div class="input">
-    <input id="input" placeholder="Escribe aquí…" />
+    <input id="input" placeholder="Escribe aquí…" onkeydown="if(event.key==='Enter') send()" />
     <button onclick="send()">Enviar</button>
   </div>
 </div>
 
 <script>
+  // 👉 URL DE TU WEB APP (Apps Script)
   const API_URL = "https://script.google.com/macros/s/AKfycbzLpDzc714eXY1qKoHlHLVyxmdxMBcHBVwbtEeT06YitRFYVT8JjD3dBBsQhPnuTaPaDA/exec";
 
   const messages = document.getElementById("messages");
@@ -94,27 +109,40 @@
   }
 
   async function send() {
-    const text = input.value.trim();
-    if (!text) return;
+    const userText = input.value.trim();
+    if (!userText) return;
 
-    addMessage(text, "user");
+    addMessage(userText, "user");
     input.value = "";
 
     addMessage("Escribiendo…", "bot");
 
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
-    });
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText })
+      });
 
-const text = await res.text();
-const json = JSON.parse(text.match(/\{.*\}/s)[0]);
-messages.lastChild.textContent = json.reply;
+      const rawText = await res.text();
 
+      // Apps Script responde HTML → extraemos el JSON
+      const match = rawText.match(/\{[\s\S]*\}/);
+      if (!match) {
+        messages.lastChild.textContent = "Parce, algo raro pasó. Intenta otra vez.";
+        return;
+      }
+
+      const data = JSON.parse(match[0]);
+      messages.lastChild.textContent = data.reply || "Ey parce, aquí sigo.";
+
+    } catch (err) {
+      messages.lastChild.textContent = "Error de conexión. Revisa la URL.";
+    }
   }
 
-  addMessage("Ey parce, soy PARCE 🤜🤛 Escríbeme sin pena.", "bot");
+  // Mensaje inicial
+  addMessage("Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.", "bot");
 </script>
 
 </body>
