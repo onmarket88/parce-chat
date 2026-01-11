@@ -78,6 +78,11 @@
       cursor: pointer;
       font-weight: bold;
     }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 
@@ -87,24 +92,21 @@
   <div class="header">PARCE 🤜🤛</div>
   <div class="messages" id="messages"></div>
   <div class="input">
-    <input
-      id="input"
-      placeholder="Escribe aquí…"
-      onkeydown="if(event.key==='Enter') sendMessage()"
-    />
-    <button onclick="sendMessage()">Enviar</button>
+    <input id="input" placeholder="Escribe aquí…" />
+    <button id="sendBtn">Enviar</button>
   </div>
 </div>
 
 <script>
-  // 🔥 BACKEND
   const API_URL = "https://parce-backend.onmarket-guat.workers.dev";
 
   const messagesDiv = document.getElementById("messages");
   const input = document.getElementById("input");
+  const sendBtn = document.getElementById("sendBtn");
 
-  // 🧠 HISTORIAL REAL (CLAVE)
+  // 🧠 HISTORIAL REAL
   const history = [];
+  let isSending = false;
 
   function addMessage(text, cls) {
     const div = document.createElement("div");
@@ -115,17 +117,19 @@
   }
 
   async function sendMessage() {
+    if (isSending) return;
+
     const userText = input.value.trim();
     if (!userText) return;
 
-    // Mostrar mensaje usuario
+    isSending = true;
+    sendBtn.disabled = true;
+
     addMessage(userText, "user");
     input.value = "";
 
-    // Guardar en historial
     history.push({ role: "user", text: userText });
 
-    // Indicador escribiendo
     const typing = document.createElement("div");
     typing.className = "msg bot";
     typing.textContent = "Escribiendo…";
@@ -140,23 +144,29 @@
       });
 
       const data = await res.json();
-      console.log("RESPUESTA BACKEND:", data);
-
       const reply = data.reply || "Parce, aquí sigo 🤜🤛";
 
-      // Mostrar respuesta
       typing.textContent = reply;
-
-      // Guardar respuesta en historial
       history.push({ role: "model", text: reply });
 
     } catch (err) {
-      console.error("ERROR FETCH:", err);
       typing.textContent = "Parce, se cayó la conexión 😅";
+    } finally {
+      isSending = false;
+      sendBtn.disabled = false;
     }
   }
 
-  // Mensaje inicial (y se guarda en historial)
+  sendBtn.addEventListener("click", sendMessage);
+
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // 👋 MENSAJE INICIAL
   const welcome = "Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.";
   addMessage(welcome, "bot");
   history.push({ role: "model", text: welcome });
