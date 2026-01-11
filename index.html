@@ -108,8 +108,10 @@
       body: JSON.stringify({ message: text })
     });
 
-    const data = await res.json();
-    messages.lastChild.textContent = data.reply;
+const text = await res.text();
+const json = JSON.parse(text.match(/\{.*\}/s)[0]);
+messages.lastChild.textContent = json.reply;
+
   }
 
   addMessage("Ey parce, soy PARCE 🤜🤛 Escríbeme sin pena.", "bot");
