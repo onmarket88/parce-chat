@@ -16,7 +16,6 @@
       height: 100vh;
       margin: 0;
     }
-
     .chat {
       width: 100%;
       max-width: 420px;
@@ -26,52 +25,42 @@
       flex-direction: column;
       overflow: hidden;
     }
-
     .header {
-      background: #020617;
       padding: 12px;
       text-align: center;
       font-weight: bold;
       border-bottom: 1px solid #1e293b;
     }
-
     .messages {
       flex: 1;
       padding: 10px;
       overflow-y: auto;
       font-size: 14px;
     }
-
     .msg {
       margin-bottom: 10px;
       white-space: pre-wrap;
     }
-
     .user {
       text-align: right;
       color: #38bdf8;
     }
-
     .bot {
       text-align: left;
       color: #a3e635;
     }
-
     .input {
       display: flex;
       border-top: 1px solid #1e293b;
     }
-
     input {
       flex: 1;
       padding: 10px;
       border: none;
       outline: none;
-      font-size: 14px;
       background: #020617;
       color: #e5e7eb;
     }
-
     button {
       background: #38bdf8;
       border: none;
@@ -94,8 +83,7 @@
 </div>
 
 <script>
-  // 👉 URL REAL DE TU WEB APP (Apps Script)
-  const API_URL = "https://script.google.com/macros/s/AKfycbxmWmImd1ePZZb8dza-HEEAnrxAwVpHch_BTcSwWmdpmaZFVuXyN8R-LxXbUsQUrlhn/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbyYM86utGktTECblgfWvtbkK8VQEiKn5AxpRuWunelxUOkshrH7OT8akmIppSFewi0RPw/exec";
 
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
@@ -106,7 +94,6 @@
     div.textContent = text;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
-    return div;
   }
 
   async function send() {
@@ -115,31 +102,32 @@
 
     addMessage(userText, "user");
     input.value = "";
-
-    const botMsg = addMessage("Escribiendo…", "bot");
+    addMessage("Escribiendo…", "bot");
 
     try {
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({ message: userText })
       });
 
-      if (!res.ok) {
-        botMsg.textContent = "Parce, hubo un problema con el servidor.";
+      const raw = await res.text();
+
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) {
+        messages.lastChild.textContent = "Ey parce, aquí sigo 🤜🤛";
         return;
       }
 
-      const data = await res.json();
+      const data = JSON.parse(match[0]);
+      messages.lastChild.textContent = data.reply || "Aquí estoy, parce.";
 
-      botMsg.textContent = data.reply || "Ey parce, aquí sigo contigo.";
-
-    } catch (error) {
-      botMsg.textContent = "Error de conexión. Revisa la URL o tu internet.";
+    } catch (e) {
+      messages.lastChild.textContent = "Uy parce, algo se cayó 😅";
     }
   }
 
-  // Mensaje inicial
   addMessage("Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.", "bot");
 </script>
 
