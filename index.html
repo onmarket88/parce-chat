@@ -104,8 +104,6 @@
   const input = document.getElementById("input");
   const sendBtn = document.getElementById("sendBtn");
 
-  let isSending = false;
-
   function addMessage(text, cls) {
     const div = document.createElement("div");
     div.className = "msg " + cls;
@@ -115,16 +113,12 @@
   }
 
   async function sendMessage() {
-    if (isSending) return;
+    const text = input.value.trim();
+    if (!text) return;
 
-    const userText = input.value.trim();
-    if (!userText) return;
-
-    isSending = true;
-    sendBtn.disabled = true;
-
-    addMessage(userText, "user");
+    addMessage(text, "user");
     input.value = "";
+    sendBtn.disabled = true;
 
     const botDiv = document.createElement("div");
     botDiv.className = "msg bot";
@@ -135,32 +129,24 @@
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userText
-        })
+        body: JSON.stringify({ message: text })
       });
 
       const data = await res.json();
-      console.log("🔵 BACKEND RESPONSE:", data);
+      botDiv.textContent = data.reply || "🤔";
 
-      botDiv.textContent =
-        data?.reply || "⚠️ El backend respondió vacío";
-
-    } catch (err) {
-      console.error("❌ FETCH ERROR:", err);
+    } catch {
       botDiv.textContent = "❌ Error de conexión";
     } finally {
-      isSending = false;
       sendBtn.disabled = false;
     }
   }
 
-  sendBtn.addEventListener("click", sendMessage);
+  sendBtn.onclick = sendMessage;
   input.addEventListener("keydown", e => {
     if (e.key === "Enter") sendMessage();
   });
 
-  // Mensaje inicial
   addMessage("Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.", "bot");
 </script>
 
