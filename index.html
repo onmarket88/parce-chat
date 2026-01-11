@@ -16,6 +16,7 @@
       height: 100vh;
       margin: 0;
     }
+
     .chat {
       width: 100%;
       max-width: 420px;
@@ -25,42 +26,51 @@
       flex-direction: column;
       overflow: hidden;
     }
+
     .header {
       padding: 12px;
       text-align: center;
       font-weight: bold;
       border-bottom: 1px solid #1e293b;
     }
+
     .messages {
       flex: 1;
       padding: 10px;
       overflow-y: auto;
       font-size: 14px;
     }
+
     .msg {
       margin-bottom: 10px;
       white-space: pre-wrap;
     }
+
     .user {
       text-align: right;
       color: #38bdf8;
     }
+
     .bot {
       text-align: left;
       color: #a3e635;
     }
+
     .input {
       display: flex;
       border-top: 1px solid #1e293b;
     }
+
     input {
       flex: 1;
       padding: 10px;
       border: none;
       outline: none;
+      font-size: 14px;
       background: #020617;
       color: #e5e7eb;
     }
+
     button {
       background: #38bdf8;
       border: none;
@@ -77,13 +87,18 @@
   <div class="header">PARCE 🤜🤛</div>
   <div class="messages" id="messages"></div>
   <div class="input">
-    <input id="input" placeholder="Escribe aquí…" onkeydown="if(event.key==='Enter') send()" />
-    <button onclick="send()">Enviar</button>
+    <input
+      id="input"
+      placeholder="Escribe aquí…"
+      onkeydown="if(event.key==='Enter') sendMessage()"
+    />
+    <button onclick="sendMessage()">Enviar</button>
   </div>
 </div>
 
 <script>
-  const API_URL = "https://parce-backend.onmarket-guat.workers.dev/";
+  // 🔥 TU BACKEND REAL (Cloudflare Worker)
+  const API_URL = "https://parce-backend.onmarket-guat.workers.dev";
 
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
@@ -96,38 +111,38 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
-  async function send() {
+  async function sendMessage() {
     const userText = input.value.trim();
     if (!userText) return;
 
     addMessage(userText, "user");
     input.value = "";
-    addMessage("Escribiendo…", "bot");
+
+    const typing = document.createElement("div");
+    typing.className = "msg bot";
+    typing.textContent = "Escribiendo…";
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
 
     try {
       const res = await fetch(API_URL, {
         method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText })
       });
 
-      const raw = await res.text();
+      const data = await res.json();
+      console.log("RESPUESTA BACKEND:", data);
 
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) {
-        messages.lastChild.textContent = "Ey parce, aquí sigo 🤜🤛";
-        return;
-      }
+      typing.textContent = data.reply || "Parce, aquí sigo 🤜🤛";
 
-      const data = JSON.parse(match[0]);
-      messages.lastChild.textContent = data.reply || "Aquí estoy, parce.";
-
-    } catch (e) {
-      messages.lastChild.textContent = "Uy parce, algo se cayó 😅";
+    } catch (err) {
+      console.error("ERROR FETCH:", err);
+      typing.textContent = "Parce, se cayó la conexión 😅";
     }
   }
 
+  // Mensaje inicial
   addMessage("Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.", "bot");
 </script>
 
