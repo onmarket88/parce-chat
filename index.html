@@ -104,7 +104,6 @@
   const input = document.getElementById("input");
   const sendBtn = document.getElementById("sendBtn");
 
-  // 🧠 HISTORIAL REAL
   const history = [];
   let isSending = false;
 
@@ -130,10 +129,11 @@
 
     history.push({ role: "user", text: userText });
 
-    const typing = document.createElement("div");
-    typing.className = "msg bot";
-    typing.textContent = "Escribiendo…";
-    messagesDiv.appendChild(typing);
+    // ⏳ mensaje independiente (NO reutilizado)
+    const botDiv = document.createElement("div");
+    botDiv.className = "msg bot";
+    botDiv.textContent = "Escribiendo…";
+    messagesDiv.appendChild(botDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     try {
@@ -144,13 +144,17 @@
       });
 
       const data = await res.json();
-      const reply = data.reply || "Parce, aquí sigo 🤜🤛";
 
-      typing.textContent = reply;
+      console.log("🔵 BACKEND RESPONSE:", data);
+
+      const reply = data?.reply ?? "⚠️ El backend respondió vacío";
+
+      botDiv.textContent = reply;
       history.push({ role: "model", text: reply });
 
     } catch (err) {
-      typing.textContent = "Parce, se cayó la conexión 😅";
+      console.error("❌ FETCH ERROR:", err);
+      botDiv.textContent = "❌ Error real de conexión";
     } finally {
       isSending = false;
       sendBtn.disabled = false;
@@ -160,7 +164,7 @@
   sendBtn.addEventListener("click", sendMessage);
 
   input.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter") {
       e.preventDefault();
       sendMessage();
     }
