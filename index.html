@@ -94,7 +94,7 @@
 </div>
 
 <script>
-  // 👉 URL DE TU WEB APP (Apps Script)
+  // 👉 URL REAL DE TU WEB APP (Apps Script)
   const API_URL = "https://script.google.com/macros/s/AKfycbwJjMMU1ln9ADitUjhgCz-oMbzSvFavbBJtNx2k7hZOdTuU3Lhr2L-MOfYyYlAn1ZoAGQ/exec";
 
   const messages = document.getElementById("messages");
@@ -106,6 +106,7 @@
     div.textContent = text;
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
+    return div;
   }
 
   async function send() {
@@ -115,7 +116,7 @@
     addMessage(userText, "user");
     input.value = "";
 
-    addMessage("Escribiendo…", "bot");
+    const botMsg = addMessage("Escribiendo…", "bot");
 
     try {
       const res = await fetch(API_URL, {
@@ -124,20 +125,17 @@
         body: JSON.stringify({ message: userText })
       });
 
-      const rawText = await res.text();
-
-      // Apps Script responde HTML → extraemos el JSON
-      const match = rawText.match(/\{[\s\S]*\}/);
-      if (!match) {
-        messages.lastChild.textContent = "Parce, algo raro pasó. Intenta otra vez.";
+      if (!res.ok) {
+        botMsg.textContent = "Parce, hubo un problema con el servidor.";
         return;
       }
 
-      const data = JSON.parse(match[0]);
-      messages.lastChild.textContent = data.reply || "Ey parce, aquí sigo.";
+      const data = await res.json();
 
-    } catch (err) {
-      messages.lastChild.textContent = "Error de conexión. Revisa la URL.";
+      botMsg.textContent = data.reply || "Ey parce, aquí sigo contigo.";
+
+    } catch (error) {
+      botMsg.textContent = "Error de conexión. Revisa la URL o tu internet.";
     }
   }
 
