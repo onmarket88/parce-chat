@@ -104,6 +104,7 @@
   const input = document.getElementById("input");
   const sendBtn = document.getElementById("sendBtn");
 
+  // 🧠 HISTORIAL COMPLETO
   const history = [];
   let isSending = false;
 
@@ -124,12 +125,28 @@
     isSending = true;
     sendBtn.disabled = true;
 
+    // Mostrar mensaje del usuario
     addMessage(userText, "user");
     input.value = "";
 
-    history.push({ role: "user", text: userText });
+    // 🔥 TRANSFORMACIÓN CLAVE DEL INPUT (ROMPE EL LOOP)
+    const enrichedInput = `
+El usuario dice exactamente: "${userText}"
 
-    // ⏳ mensaje independiente (NO reutilizado)
+Contexto obligatorio:
+- Estás en una conversación continua.
+- Ya has respondido antes.
+- NO repitas frases ni ideas anteriores.
+- Si el mensaje es corto o ambiguo, responde con creatividad.
+- Cambia enfoque si el usuario insiste.
+- Sé humano, cercano y específico.
+
+Responde como PARCE 🤜🤛:
+`;
+
+    history.push({ role: "user", text: enrichedInput });
+
+    // Indicador escribiendo
     const botDiv = document.createElement("div");
     botDiv.className = "msg bot";
     botDiv.textContent = "Escribiendo…";
@@ -144,7 +161,6 @@
       });
 
       const data = await res.json();
-
       console.log("🔵 BACKEND RESPONSE:", data);
 
       const reply = data?.reply ?? "⚠️ El backend respondió vacío";
