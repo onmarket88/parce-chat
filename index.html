@@ -104,8 +104,6 @@
   const input = document.getElementById("input");
   const sendBtn = document.getElementById("sendBtn");
 
-  // 🧠 HISTORIAL COMPLETO
-  const history = [];
   let isSending = false;
 
   function addMessage(text, cls) {
@@ -125,52 +123,32 @@
     isSending = true;
     sendBtn.disabled = true;
 
-    // Mostrar mensaje del usuario
     addMessage(userText, "user");
     input.value = "";
 
-    // 🔥 TRANSFORMACIÓN CLAVE DEL INPUT (ROMPE EL LOOP)
-    const enrichedInput = `
-El usuario dice exactamente: "${userText}"
-
-Contexto obligatorio:
-- Estás en una conversación continua.
-- Ya has respondido antes.
-- NO repitas frases ni ideas anteriores.
-- Si el mensaje es corto o ambiguo, responde con creatividad.
-- Cambia enfoque si el usuario insiste.
-- Sé humano, cercano y específico.
-
-Responde como PARCE 🤜🤛:
-`;
-
-    history.push({ role: "user", text: enrichedInput });
-
-    // Indicador escribiendo
     const botDiv = document.createElement("div");
     botDiv.className = "msg bot";
     botDiv.textContent = "Escribiendo…";
     messagesDiv.appendChild(botDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     try {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history })
+        body: JSON.stringify({
+          message: userText
+        })
       });
 
       const data = await res.json();
       console.log("🔵 BACKEND RESPONSE:", data);
 
-      const reply = data?.reply ?? "⚠️ El backend respondió vacío";
-
-      botDiv.textContent = reply;
-      history.push({ role: "model", text: reply });
+      botDiv.textContent =
+        data?.reply || "⚠️ El backend respondió vacío";
 
     } catch (err) {
       console.error("❌ FETCH ERROR:", err);
-      botDiv.textContent = "❌ Error real de conexión";
+      botDiv.textContent = "❌ Error de conexión";
     } finally {
       isSending = false;
       sendBtn.disabled = false;
@@ -178,18 +156,12 @@ Responde como PARCE 🤜🤛:
   }
 
   sendBtn.addEventListener("click", sendMessage);
-
   input.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter") sendMessage();
   });
 
-  // 👋 MENSAJE INICIAL
-  const welcome = "Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.";
-  addMessage(welcome, "bot");
-  history.push({ role: "model", text: welcome });
+  // Mensaje inicial
+  addMessage("Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.", "bot");
 </script>
 
 </body>
