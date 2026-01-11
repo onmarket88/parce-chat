@@ -97,44 +97,58 @@
 </div>
 
 <script>
-  // 🔥 TU BACKEND REAL (Cloudflare Worker)
+  // 🔥 BACKEND
   const API_URL = "https://parce-backend.onmarket-guat.workers.dev";
 
-  const messages = document.getElementById("messages");
+  const messagesDiv = document.getElementById("messages");
   const input = document.getElementById("input");
+
+  // 🧠 HISTORIAL REAL (CLAVE)
+  const history = [];
 
   function addMessage(text, cls) {
     const div = document.createElement("div");
     div.className = "msg " + cls;
     div.textContent = text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
 
   async function sendMessage() {
     const userText = input.value.trim();
     if (!userText) return;
 
+    // Mostrar mensaje usuario
     addMessage(userText, "user");
     input.value = "";
 
+    // Guardar en historial
+    history.push({ role: "user", text: userText });
+
+    // Indicador escribiendo
     const typing = document.createElement("div");
     typing.className = "msg bot";
     typing.textContent = "Escribiendo…";
-    messages.appendChild(typing);
-    messages.scrollTop = messages.scrollHeight;
+    messagesDiv.appendChild(typing);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     try {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText })
+        body: JSON.stringify({ history })
       });
 
       const data = await res.json();
       console.log("RESPUESTA BACKEND:", data);
 
-      typing.textContent = data.reply || "Parce, aquí sigo 🤜🤛";
+      const reply = data.reply || "Parce, aquí sigo 🤜🤛";
+
+      // Mostrar respuesta
+      typing.textContent = reply;
+
+      // Guardar respuesta en historial
+      history.push({ role: "model", text: reply });
 
     } catch (err) {
       console.error("ERROR FETCH:", err);
@@ -142,8 +156,10 @@
     }
   }
 
-  // Mensaje inicial
-  addMessage("Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.", "bot");
+  // Mensaje inicial (y se guarda en historial)
+  const welcome = "Ey parce 🤜🤛 soy PARCE. Escríbeme sin pena.";
+  addMessage(welcome, "bot");
+  history.push({ role: "model", text: welcome });
 </script>
 
 </body>
